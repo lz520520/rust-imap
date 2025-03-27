@@ -673,6 +673,25 @@ impl<T: Read + Write> Session<T> {
         }
     }
 
+    pub fn uid_fetches(
+        &mut self,
+        uid_sets: impl AsRef<str>,
+        query: impl AsRef<str>,
+    ) -> Result<Fetches> {
+        if uid_sets.as_ref().is_empty() {
+            Fetches::parse(vec![], &mut self.unsolicited_responses)
+        } else {
+            let synopsis = "UID FETCH";
+            self.run_command_and_read_response(&format!(
+                "UID FETCH {} {}",
+                uid_sets.as_ref(),
+                validate_str_noquote(synopsis, "query", query.as_ref())?
+            ))
+                .and_then(|lines| Fetches::parse(lines, &mut self.unsolicited_responses))
+        }
+    }
+    
+
     /// Noop always succeeds, and it does nothing.
     pub fn noop(&mut self) -> Result<()> {
         self.run_command_and_read_response("NOOP")
